@@ -249,7 +249,41 @@ void clampedExpVector(float* values, int* exponents, float* output, int N) {
   // Your solution should work for any value of
   // N and VECTOR_WIDTH, not just when VECTOR_WIDTH divides N
   //
-  
+  __cs149_mask maskAll;
+  maskAll = _cs149_init_ones();
+  __cs149_vec_float vec_va;
+  __cs149_vec_int vec_exp;
+  __cs149_vec_float vecOne = _cs149_vset_float(1.f);
+  __cs149_vec_float vecClamp = _cs149_vset_float(9.999999f);
+  __cs149_vec_int vecZeroInt = _cs149_vset_int(0);
+  __cs149_vec_int vecOneInt = _cs149_vset_int(1);
+  for(int i=0;i<N;i+=VECTOR_WIDTH){
+    __cs149_mask mask=maskAll;
+    if(i+VECTOR_WIDTH>=N){
+      mask=_cs149_init_ones(N-i);
+    }
+    __cs149_vec_float vec_re;
+    _cs149_vload_float(vec_va,values+i,mask);
+    _cs149_vload_int(vec_exp,exponents+i,mask);
+    _cs149_vmove_float(vec_re,vec_va,mask);
+    __cs149_mask yeq0=_cs149_init_ones(0);
+    _cs149_veq_int(yeq0,vec_exp,vecZeroInt,mask);
+    _cs149_vmove_float(vec_re,vecOne,yeq0);
+    __cs149_mask yueq0=_cs149_init_ones(0);
+    _cs149_vgt_int(yueq0,vec_exp,vecZeroInt,mask);
+    _cs149_vsub_int(vec_exp,vec_exp,vecOneInt,yueq0);
+    for(int t=0;t<EXP_MAX-1;t++){
+      __cs149_mask cntgt0=_cs149_init_ones(0);
+      _cs149_vgt_int(cntgt0,vec_exp,vecZeroInt,mask);
+      _cs149_vmult_float(vec_re,vec_va,vec_re,cntgt0);   
+      _cs149_vsub_int(vec_exp,vec_exp,vecOneInt,cntgt0);  
+    }
+    __cs149_mask vagt10=_cs149_init_ones(0);
+    _cs149_vgt_float(vagt10,vec_re,vecClamp,yueq0);
+    _cs149_vmove_float(vec_re,vecClamp,vagt10);
+    _cs149_vstore_float(output+i,vec_re,mask);
+  }
+
 }
 
 // returns the sum of all elements in values
@@ -270,11 +304,20 @@ float arraySumVector(float* values, int N) {
   //
   // CS149 STUDENTS TODO: Implement your vectorized version of arraySumSerial here
   //
+  __cs149_mask mask;
+  __cs149_vec_float vec_va;
+  __cs149_vec_float vec_sum = _cs149_vset_float(0.f);
   
   for (int i=0; i<N; i+=VECTOR_WIDTH) {
-
+    mask=_cs149_init_ones();
+    _cs149_vload_float(vec_va,values+i,mask);
+    _cs149_vadd_float(vec_sum,vec_va,vec_sum,mask);
+  }
+  for(int i=1;i<VECTOR_WIDTH;i*=2){
+    _cs149_hadd_float(vec_sum,vec_sum);
+    _cs149_interleave_float(vec_sum,vec_sum);
   }
 
-  return 0.0;
+  return vec_sum.value[0];
 }
 
