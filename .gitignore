@@ -20,6 +20,13 @@ dist/
 build/
 .ipynb_checkpoints/
 
+# Model checkpoints
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.bin
+
 # Jupyter
 .ipynb_checkpoints/
 
