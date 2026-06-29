@@ -37,10 +37,11 @@ int main() {
         values[i] = .001f + 2.998f * static_cast<float>(rand()) / RAND_MAX;
         
         //best
-        // values[i]=20262026;
+
+        //values[i]=2.998;
         
         //worst
-        // if (i==0)values[i]=20262026;
+        // if (i%8==0)values[i]=2.998;
         // else{
         //     values[i]=1;
         // }
