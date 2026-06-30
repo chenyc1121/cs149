@@ -2,6 +2,10 @@
 #define _TASKSYS_H
 
 #include "itasksys.h"
+#include <thread>
+#include <atomic>
+#include <mutex>
+#include <condition_variable>
 
 /*
  * TaskSystemSerial: This class is the student's implementation of a
@@ -34,6 +38,8 @@ class TaskSystemParallelSpawn: public ITaskSystem {
         TaskID runAsyncWithDeps(IRunnable* runnable, int num_total_tasks,
                                 const std::vector<TaskID>& deps);
         void sync();
+    private:
+        int _num_threads;
 };
 
 /*
@@ -51,6 +57,14 @@ class TaskSystemParallelThreadPoolSpinning: public ITaskSystem {
         TaskID runAsyncWithDeps(IRunnable* runnable, int num_total_tasks,
                                 const std::vector<TaskID>& deps);
         void sync();
+    private:
+        int _num_threads;
+        std::vector<std::thread> _threads;
+        IRunnable* _runnable;
+        int _num_total_tasks;
+        std::atomic<bool> _go;
+        std::atomic<int> _done_count;
+        std::atomic<bool> _exit;
 };
 
 /*
@@ -68,6 +82,19 @@ class TaskSystemParallelThreadPoolSleeping: public ITaskSystem {
         TaskID runAsyncWithDeps(IRunnable* runnable, int num_total_tasks,
                                 const std::vector<TaskID>& deps);
         void sync();
-};
+    private:
+        int _num_threads;
+        std::vector<std::thread> _threads;
 
+        // 工作数据（受 _mutex 保护）
+        IRunnable* _runnable;
+        int _num_total_tasks;
+        int _tasks_done;              // 已完成任务
+        std::vector<bool> _done_flags; // 每个 worker 是否已干完本轮活
+        bool _go;                     // 有活干
+        bool _exit;                   // 线程该退出了
+
+        std::mutex _mutex;
+        std::condition_variable _cv;
+};
 #endif
