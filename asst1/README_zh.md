@@ -24,6 +24,7 @@ ISPC是编译本作业中许多程序所必需的编译器。
 从ISPC[下载页面](https://ispc.github.io/downloads.html)获取适合你系统的ISPC编译器二进制文件：
 
 **Linux (x86_64):**
+
 ```bash
 wget https://github.com/ispc/ispc/releases/download/v1.28.1/ispc-v1.28.1-linux.tar.gz
 tar -xvf ispc-v1.28.1-linux.tar.gz
@@ -31,6 +32,7 @@ export PATH=$PATH:${HOME}/Downloads/ispc-v1.28.1-linux/bin
 ```
 
 **macOS (Apple Silicon):**
+
 ```bash
 wget https://github.com/ispc/ispc/releases/download/v1.28.1/ispc-v1.28.1-MacOS.tar.gz
 tar -xvf ispc-v1.28.1-MacOS.tar.gz
@@ -49,20 +51,14 @@ git clone https://github.com/stanford-cs149/asst1.git
 
 进入 `prog1_mandelbrot_threads/` 目录，构建并运行代码。（输入 `make` 构建，`./mandelbrot` 运行。）该程序生成图像文件 `mandelbrot-serial.ppm`，这是一个著名的复数集合——Mandelbrot集合的可视化。
 
-> **本地查看PPM图像：** 在Linux上可以使用 `display` 命令（需安装ImageMagick：`sudo apt install imagemagick`）或 `eog`。也可以将PPM转换为PNG：`convert mandelbrot-serial.ppm mandelbrot-serial.png`。
-
-你的工作是将图像计算并行化，使用[std::thread](https://en.cppreference.com/w/cpp/thread/thread)。起始代码在 `mandelbrotThread.cpp` 的 `mandelbrotThread()` 函数中。目前启动的线程不做任何计算就立即返回。你需要在 `workerThreadStart` 函数中添加代码来完成此任务。
+> **本地查看PPM图像：** 在Linux上可以使用 `display` 命令（需安装ImageMagick：`sudo apt install imagemagick`）或 `eog`。也可以将PPM转换为PNG：`convert mandelbrot-serial.ppm mandelbrot-serial.png`。你的工作是将图像计算并行化，使用[std::thread](https://en.cppreference.com/w/cpp/thread/thread)。起始代码在 `mandelbrotThread.cpp` 的 `mandelbrotThread()` 函数中。目前启动的线程不做任何计算就立即返回。你需要在 `workerThreadStart` 函数中添加代码来完成此任务。
 
 **需要做的事情：**
 
 1. 修改起始代码，使用两个线程并行化Mandelbrot生成。具体来说，线程0计算图像的上半部分，线程1计算下半部分。这种问题分解方式称为**空间分解**。
-
 2. 扩展代码以使用2、3、4、5、6、7和8个线程，相应地划分图像生成工作（线程应获得图像的块）。注意，你的处理器核心数可能与原作业描述的4核不同。在你的实验报告中，制作一个**相对于参考串行实现的加速比**图表，作为线程数的函数（**针对视图1**）。加速比是否与线程数成线性关系？在你的报告中假设为什么会这样（或为什么不这样）？
-
 3. 为了确认（或反驳）你的假设，在 `workerThreadStart()` 的开始和结束处插入计时代码，测量每个线程完成工作所需的时间。
-
 4. 修改工作到线程的映射，在Mandelbrot集合的**两个视图上达到尽可能高的加速比**。你不可以在解决方案中使用线程间的同步。我们希望你提出一个适用于所有线程数的单一工作分解策略——不允许为每种配置硬编码特定解决方案！（提示：有一个非常简单的静态分配可以实现此目标，且不需要线程间的通信/同步。）
-
 5. 现在用超过物理核心数的线程数运行改进后的代码。性能是否明显优于使用等于物理核心数的线程数？为什么或为什么不？
 
 ## 程序2：使用SIMD Intrinsics向量化代码（20分）
@@ -74,9 +70,7 @@ git clone https://github.com/stanford-cs149/asst1.git
 **需要做的事情：**
 
 1. 在 `clampedExpVector` 中实现 `clampedExpSerial` 的向量化版本。你的实现应适用于任何输入数组大小（`N`）和向量宽度（`VECTOR_WIDTH`）的组合。
-
 2. 运行 `./myexp -s 10000` 并将向量宽度从2、4、8扫描到16。记录得到的向量利用率。你可以通过更改 `CS149intrin.h` 中的 `#define VECTOR_WIDTH` 值来实现。
-
 3. **额外加分（1分）：** 在 `arraySumVector` 中实现 `arraySumSerial` 的向量化版本。你的实现可以假设 `VECTOR_WIDTH` 是输入数组大小 `N` 的因子。串行实现的运行时间为 `O(N)`，你的实现应力求达到 `(N / VECTOR_WIDTH + VECTOR_WIDTH)` 甚至 `(N / VECTOR_WIDTH + log2(VECTOR_WIDTH))` 的运行时间。
 
 ## 程序3：使用ISPC并行生成分形图（20分）
@@ -106,9 +100,7 @@ ISPC的SPMD执行模型和 `foreach` 等机制便于创建利用SIMD处理的程
 **需要做的事情：**
 
 1. 使用 `--tasks` 参数运行 `mandelbrot_ispc`。在视图1上观察到什么加速比？
-
 2. 有一种简单的方法可以通过更改代码创建的任务数来提高 `mandelbrot_ispc --tasks` 的性能。仅通过更改 `mandelbrot_ispc_withtasks()` 函数中的代码，你应该能达到超过串行版本32倍的性能！
-
 3. **额外加分（2分）：** 线程抽象（程序1中使用）和ISPC任务抽象之间有什么区别？
 
 ## 程序4：迭代`sqrt`（15分）
@@ -118,11 +110,8 @@ ISPC的SPMD执行模型和 `foreach` 等机制便于创建利用SIMD处理的程
 **需要做的事情：**
 
 1. 构建并运行 `sqrt`。报告单CPU核心（无任务）和使用所有核心（有任务）时的ISPC实现加速比。SIMD并行化带来的加速比是多少？多核并行化带来的加速比是多少？
-
 2. 修改数组值的内容以提高ISPC实现的相对加速比。构造一个特定的输入，**最大化相对于串行版本的加速比**。
-
 3. 为 `sqrt` 构造一个特定输入，**最小化ISPC（无任务）相对于串行版本的加速比**。
-
 4. **额外加分（最多2分）：** 使用AVX2 intrinsics（x86）或Neon intrinsics（ARM）手动编写你自己的 `sqrt` 函数版本。
 
 ## 程序5：BLAS `saxpy`（10分）
@@ -132,9 +121,7 @@ ISPC的SPMD执行模型和 `foreach` 等机制便于创建利用SIMD处理的程
 **需要做的事情：**
 
 1. 编译并运行 `saxpy`。程序将报告ISPC（无任务）和ISPC（有任务）实现的性能。你观察到使用ISPC with tasks的加速比是多少？
-
 2. **额外加分（1分）：** 注意 `main.cpp` 中消耗的总内存带宽计算为 `TOTAL_BYTES = 4 * N * sizeof(float);`。即使 `saxpy` 从X加载一个元素，从Y加载一个元素，向`result`写入一个元素，乘以4仍然是正确的。为什么？
-
 3. **额外加分：** 提高 `saxpy` 的性能。我们期望的是显著的加速比，而不仅仅是几个百分点。
 
 ## 程序6：让K-Means更快（15分）
@@ -144,19 +131,20 @@ ISPC的SPMD执行模型和 `foreach` 等机制便于创建利用SIMD处理的程
 **需要做的事情：**
 
 1. 下载数据集。原作业通过AFS访问数据：
+
    ```bash
    # 原作业命令（需要Stanford AFS访问权限）：
    # ln -s /afs/ir.stanford.edu/class/cs149/data/data.dat ./data.dat
    ```
+
    > **⚠️ 本地运行：** 你没有AFS访问权限。你需要从课程GitHub仓库查找数据文件的下载链接，或联系课程教师获取数据访问方式。也可以尝试使用 `scp` 从myth机器下载（如果有账号），或使用自己生成的测试数据来验证代码逻辑的正确性。
-
+   >
 2. 运行 `pip install -r requirements.txt` 安装必要的绘图包。然后运行 `python3 plot.py` 生成可视化图像。
-
 3. 使用 `common/CycleTimer.h` 中的计时功能来确定代码中哪里存在性能瓶颈。
-
 4. 基于上一步的发现，改进实现。我们期望达到约2.1倍或更高的加速比。
 
 **约束条件：**
+
 - 只能修改 `kmeansThread.cpp` 中的代码
 - 不能修改 `stoppingConditionMet` 函数
 - 只能并行化以下**一个**函数：`dist`、`computeAssignments`、`computeCentroids`、`computeCost`
@@ -174,13 +162,15 @@ ISPC的SPMD执行模型和 `foreach` 等机制便于创建利用SIMD处理的程
 ## 提交说明
 
 > **⚠️ 本地运行说明：** 由于你是本地运行而非在Stanford myth机器上，请注意：
+>
 > - 在报告中明确说明你使用的机器配置（CPU型号、核心数、是否支持超线程、SIMD宽度等）
 > - 性能数据将因硬件不同而与原作业参考值有所差异，这完全正常
 > - 分析思路和方法比具体数字更重要
 
 ## 资源和备注
 
-- 丰富的ISPC文档和示例可在 <http://ispc.github.io/> 找到
+- 丰富的ISPC文档和示例可在 [http://ispc.github.io/](http://ispc.github.io/) 找到
 - 放大Mandelbrot图像的不同位置非常有趣
-- Intel提供了大量关于AVX2向量指令的支持材料：<http://software.intel.com/en-us/avx/>
+- Intel提供了大量关于AVX2向量指令的支持材料：[http://software.intel.com/en-us/avx/](http://software.intel.com/en-us/avx/)
 - [Intel Intrinsics Guide](https://software.intel.com/sites/landingpage/IntrinsicsGuide/) 非常有用
+
