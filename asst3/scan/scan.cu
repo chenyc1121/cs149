@@ -27,6 +27,36 @@ static inline int nextPow2(int n) {
     return n;
 }
 
+__global__ void upsweep_kernel(int* data,int N,int twod){
+    int twod1=twod*2;
+    int idx=blockIdx.x*blockDim.x+threadIdx.x;
+    int i=idx*twod1;
+
+    if(i<N){
+        int left=i+twod-1;
+        int right=i+twod1-1;
+        data[right]=data[left]+data[right];
+    }
+}
+
+__global__ void set_last_zero_kernel(int* data,int N){
+    if(threadIdx.x==0&&blockIdx.x==0){
+        data[N-1]=0;
+    }
+}
+__global__ void downswap_kernel(int* data,int N,int twod){
+    int twod1=twod*2;
+    int idx=blockIdx.x*blockDim.x+threadIdx.x;
+    int i=idx*twod1;
+
+    if(i<N){
+        int left=i+twod-1;
+        int right=i+twod1-1;
+        int tmp=data[left];
+        data[left]=data[right];
+        data[right]=tmp+data[right];
+    }
+}
 // exclusive_scan --
 //
 // Implementation of an exclusive scan on global memory array `input`,
@@ -54,6 +84,26 @@ void exclusive_scan(int* input, int N, int* result)
     // to CUDA kernel functions (that you must write) to implement the
     // scan.
 
+    int rounded_N = nextPow2(N);
+
+    // Upsweep phase
+    for (int twod = 1; twod < rounded_N/2; twod *= 2) {
+        int numThreads = rounded_N / (twod * 2);
+        int threads = (numThreads < THREADS_PER_BLOCK) ? numThreads : THREADS_PER_BLOCK;
+        int blocks = (numThreads + threads - 1) / threads;
+        upsweep_kernel<<<blocks, threads>>>(result, rounded_N, twod);
+    }
+
+    // Set last element to 0
+    set_last_zero_kernel<<<1, 1>>>(result, rounded_N);
+
+    // Downsweep phase
+    for (int twod = rounded_N/2; twod >= 1; twod /= 2) {
+        int numThreads = rounded_N / (twod * 2);
+        int threads = (numThreads < THREADS_PER_BLOCK) ? numThreads : THREADS_PER_BLOCK;
+        int blocks = (numThreads + threads - 1) / threads;
+        downswap_kernel<<<blocks, threads>>>(result, rounded_N, twod);
+    }
 
 }
 
@@ -141,6 +191,19 @@ double cudaScanThrust(int* inarray, int* end, int* resultarray) {
 }
 
 
+__global__ void make_mask_kernel(int* input,int* mask,int len,int roundN){
+    int i=blockIdx.x*blockDim.x+threadIdx.x;
+    if(i<roundN){
+        mask[i]=(i<len-1&& input[i]==input[i+1])?1:0;
+    }
+}
+
+__global__ void scatter_repeats_kernel(int* scan,int* output,int len){
+    int i=blockIdx.x*blockDim.x+threadIdx.x;
+    if(i<len-1&&scan[i]<scan[i+1]){
+        output[scan[i]]=i;
+    }
+}
 // find_repeats --
 //
 // Given an array of integers `device_input`, returns an array of all
@@ -160,8 +223,23 @@ int find_repeats(int* device_input, int length, int* device_output) {
     // exclusive_scan function with them. However, your implementation
     // must ensure that the results of find_repeats are correct given
     // the actual array length.
+    int roundN=nextPow2(length);
+    int block=(roundN+THREADS_PER_BLOCK-1)/THREADS_PER_BLOCK;
 
-    return 0; 
+    // Step 1: write mask into device_output
+    make_mask_kernel<<<block,THREADS_PER_BLOCK>>>(device_input,device_output,length,roundN);
+
+    // Step 2: exclusive scan on device_output (in-place)
+    exclusive_scan(device_output,length,device_output);
+
+    // Step 3: read total count from last valid position
+    int total_count;
+    cudaMemcpy(&total_count, &device_output[length - 1], sizeof(int), cudaMemcpyDeviceToHost);
+
+    // Step 4: scatter — scan[i] < scan[i+1] means position i was a hit
+    scatter_repeats_kernel<<<block,THREADS_PER_BLOCK>>>(device_output,device_output,length);
+
+    return total_count;
 }
 
 

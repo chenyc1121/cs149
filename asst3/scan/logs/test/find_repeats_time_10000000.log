@@ -1,0 +1,10 @@
+---------------------------------------------------------
+Found 1 CUDA devices
+Device 0: NVIDIA GeForce RTX 5060 Laptop GPU
+   SMs:        26
+   Global mem: 8151 MB
+   CUDA Cap:   12.0
+---------------------------------------------------------
+Array size: 10000000
+Student GPU time: 6.852 ms
+Find_repeats outputs are correct!
